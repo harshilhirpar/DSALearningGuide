@@ -1,0 +1,1337 @@
+# 🏗️ System Design Mastery Roadmap — Interview Preparation Guide
+
+> **Target Audience:** Software Engineers preparing for FAANG, Big Tech, and senior-level interviews  
+> **Estimated Time to Complete:** 12–16 weeks (part-time, ~10–15 hrs/week)  
+> **Last Updated:** June 2026
+
+---
+
+## 📋 Table of Contents
+
+1. [How to Use This Roadmap](#how-to-use)
+2. [Phase 0 — Mental Model & Framework](#phase-0)
+3. [Phase 1 — Fundamentals (Weeks 1–3)](#phase-1)
+4. [Phase 2 — Core Building Blocks (Weeks 4–6)](#phase-2)
+5. [Phase 3 — Distributed Systems Deep Dive (Weeks 7–9)](#phase-3)
+6. [Phase 4 — Real-World System Design (Weeks 10–12)](#phase-4)
+7. [Phase 5 — Advanced Topics & Polish (Weeks 13–16)](#phase-5)
+8. [Interview Framework — RESHADED](#interview-framework)
+9. [Top 30 System Design Problems](#top-30-problems)
+10. [Estimation Cheat Sheet](#estimation-cheat-sheet)
+11. [Common Mistakes to Avoid](#common-mistakes)
+12. [Resources & References](#resources)
+
+---
+
+## 1. How to Use This Roadmap <a name="how-to-use"></a>
+
+- **Learn → Build → Review → Practice** — follow this cycle each week
+- Mark each topic ✅ as you complete it
+- For every concept, ask: *"How would I explain this in an interview in under 2 minutes?"*
+- Do at least **2 mock system design interviews** per week after Phase 2
+- Keep a personal **"Design Journal"** — write one-pager designs for every problem you solve
+
+---
+
+## 2. Phase 0 — Mental Model & Interview Framework <a name="phase-0"></a>
+
+Before you learn any technology, internalize **how system design interviews are evaluated**.
+
+### What Interviewers Are Looking For
+
+| Dimension | Description |
+|---|---|
+| **Problem Clarification** | Do you ask the right questions before jumping in? |
+| **Scoping** | Can you define boundaries and not over-engineer? |
+| **Component Knowledge** | Do you know the tools and why to use them? |
+| **Trade-off Analysis** | Can you explain pros/cons of every decision? |
+| **Scalability Thinking** | Can you scale from 1K to 1B users? |
+| **Communication** | Is your thought process structured and clear? |
+
+### The RESHADED Framework (Use This in Every Interview)
+
+```
+R — Requirements (functional + non-functional)
+E — Estimation (scale, storage, bandwidth)
+S — Service Interface (APIs, contracts)
+H — High-Level Design (components, data flow)
+A — Advanced Deep Dives (bottlenecks, scaling)
+D — Data Model (schema, storage choices)
+E — Edge Cases (failure modes, race conditions)
+D — Done? (summarize trade-offs, ask for feedback)
+```
+
+> **Tip:** Spend ~5 min on R, ~5 on E, ~5 on S, ~15–20 on H+A+D, ~5 on E+D. Total: ~45 min.
+
+---
+
+## 3. Phase 1 — Fundamentals (Weeks 1–3) <a name="phase-1"></a>
+
+### Week 1 — Networking & Communication Basics
+
+#### ✅ 1.1 OSI Model & TCP/IP
+
+- OSI 7 layers (Physical → Application)
+- TCP vs UDP — when to use each
+- HTTP/1.1 vs HTTP/2 vs HTTP/3 (QUIC)
+- HTTPS, TLS handshake
+
+**Key Interview Points:**
+- TCP: reliable, ordered, connection-oriented → use for APIs, file transfers
+- UDP: unreliable, fast, connectionless → use for video streaming, DNS, gaming
+- HTTP/2: multiplexing over single connection, header compression, server push
+- HTTP/3: built on QUIC (UDP-based), eliminates head-of-line blocking
+
+#### ✅ 1.2 DNS (Domain Name System)
+
+- DNS resolution chain: Client → Recursive Resolver → Root → TLD → Authoritative
+- Record types: A, AAAA, CNAME, MX, TXT, NS
+- TTL and caching implications
+- DNS-based load balancing
+
+**Key Interview Points:**
+- DNS is the first hop in every web request — understand its latency impact
+- Low TTL = more DNS lookups = flexible but slower; High TTL = cached = faster
+- GeoDNS routes users to nearest data center
+
+#### ✅ 1.3 APIs
+
+- REST vs GraphQL vs gRPC vs WebSockets
+- REST principles: stateless, uniform interface, resource-based
+- gRPC: Protocol Buffers, streaming, low latency (use for internal microservices)
+- GraphQL: flexible queries, no over/under-fetching (use for complex client needs)
+- WebSockets: full-duplex persistent connection (use for real-time chat, live feeds)
+
+**Comparison Table:**
+
+| Protocol | Format | Use Case | Latency |
+|---|---|---|---|
+| REST | JSON/XML | Public APIs, CRUD | Medium |
+| gRPC | Protobuf | Internal services | Low |
+| GraphQL | JSON | Complex queries | Medium |
+| WebSocket | Binary/JSON | Real-time | Very Low |
+| SSE | Text | Server push only | Low |
+
+---
+
+### Week 2 — Storage Fundamentals
+
+#### ✅ 2.1 SQL vs NoSQL
+
+**SQL (Relational):**
+- ACID properties: Atomicity, Consistency, Isolation, Durability
+- Strong consistency, complex joins, structured schema
+- Use when: financial transactions, complex relationships, strong consistency needed
+- Examples: PostgreSQL, MySQL, Oracle
+
+**NoSQL:**
+- BASE: Basically Available, Soft State, Eventually Consistent
+- Types and use cases:
+
+| NoSQL Type | Example | Best For |
+|---|---|---|
+| Document | MongoDB, CouchDB | JSON documents, flexible schema |
+| Key-Value | Redis, DynamoDB | Caching, sessions, leaderboards |
+| Wide-Column | Cassandra, HBase | Time-series, write-heavy workloads |
+| Graph | Neo4j, Amazon Neptune | Relationships, social networks |
+
+**Key Decision Framework:**
+- Need ACID? → SQL
+- Need massive write scale? → Cassandra / DynamoDB
+- Need fast reads with simple lookups? → Redis / DynamoDB
+- Need complex relationships? → Neo4j or SQL with indexes
+- Need flexible schema? → MongoDB
+
+#### ✅ 2.2 Indexing
+
+- B-Tree index: balanced, good for range queries, default in most RDBMS
+- Hash index: O(1) equality lookup, no range support
+- Composite index: multi-column, follow leftmost prefix rule
+- Covering index: all needed columns in index, avoids table access
+- Full-text index: for text search (use Elasticsearch for serious search)
+
+**Key Interview Points:**
+- Indexes speed up reads but slow down writes (overhead to maintain)
+- Too many indexes = slower inserts/updates
+- Always index foreign keys, columns in WHERE/ORDER BY/JOIN clauses
+
+#### ✅ 2.3 CAP Theorem
+
+```
+        Consistency
+           /\
+          /  \
+         /    \
+        /      \
+       /        \
+      /    ????  \
+     /____________\
+Availability    Partition
+                Tolerance
+```
+
+- **CP (Consistency + Partition Tolerance):** HBase, Zookeeper, Redis (in cluster mode)
+- **AP (Availability + Partition Tolerance):** Cassandra, DynamoDB, CouchDB
+- **CA (Consistency + Availability):** Traditional RDBMS — only possible without network partitions
+
+> **Interview Insight:** In practice, network partitions happen. You must choose between CP or AP. Most modern distributed systems choose AP and handle eventual consistency at the application layer.
+
+#### ✅ 2.4 PACELC Theorem (Extension of CAP)
+
+- When there is **P**artition: choose between **A**vailability and **C**onsistency
+- **E**lse (no partition): choose between **L**atency and **C**onsistency
+
+---
+
+### Week 3 — Scalability Concepts
+
+#### ✅ 3.1 Vertical vs Horizontal Scaling
+
+| | Vertical (Scale Up) | Horizontal (Scale Out) |
+|---|---|---|
+| How | Bigger machine | More machines |
+| Limit | Hardware cap | Virtually unlimited |
+| Cost | Exponential | Linear |
+| Complexity | Low | High (distributed) |
+| Failure | Single point | Fault tolerant |
+
+#### ✅ 3.2 Latency Numbers Every Engineer Should Know
+
+```
+L1 cache reference:           0.5 ns
+L2 cache reference:           7 ns
+Main memory reference:        100 ns
+SSD random read:              16 µs (16,000 ns)
+HDD random read:              2 ms  (2,000,000 ns)
+Send 1K bytes over 1Gbps:     10 µs
+Round trip in same datacenter: 500 µs
+Round trip across US:         150 ms
+Round trip across world:      300 ms
+```
+
+> **Tip:** Memorize these orders of magnitude. They justify architectural decisions.
+
+#### ✅ 3.3 Back-of-Envelope Estimation
+
+**Key Numbers:**
+- 1 million seconds ≈ 11.5 days
+- 1 day = 86,400 seconds ≈ 100K seconds
+- 1 byte = 8 bits
+- 1 KB = 10³ bytes, 1 MB = 10⁶, 1 GB = 10⁹, 1 TB = 10¹², 1 PB = 10¹⁵
+
+**Example — Twitter Scale:**
+- 300M users, 50% DAU = 150M DAU
+- Each user posts 2 tweets/day → 300M tweets/day → 3,500 tweets/second (write QPS)
+- Each user reads 100 tweets/day → 15B reads/day → 175,000 reads/second (read QPS)
+- Read:Write ratio ≈ 50:1 → read-heavy → optimize for reads with caching
+
+---
+
+## 4. Phase 2 — Core Building Blocks (Weeks 4–6) <a name="phase-2"></a>
+
+### Week 4 — Load Balancing, Caching, CDN
+
+#### ✅ 4.1 Load Balancers
+
+**Types:**
+- Layer 4 (Transport): Routes based on IP/port, fast, no content inspection (e.g., AWS NLB)
+- Layer 7 (Application): Routes based on URL, headers, cookies — smart routing (e.g., AWS ALB, Nginx)
+
+**Algorithms:**
+
+| Algorithm | How It Works | Best For |
+|---|---|---|
+| Round Robin | Each server in turn | Uniform load, stateless |
+| Weighted Round Robin | Based on server capacity | Heterogeneous servers |
+| Least Connections | Server with fewest active connections | Long-lived connections |
+| IP Hash | Hash of client IP → consistent server | Session stickiness |
+| Random | Pick random server | Simple, uniform |
+
+**Key Concepts:**
+- **Health checks:** Periodically ping servers; remove unhealthy ones
+- **Session stickiness (Affinity):** Route same user to same server — avoid when possible (stateless is better)
+- **Hot Standby:** Passive failover vs Active-Active (both serving)
+
+#### ✅ 4.2 Caching
+
+**Cache Hit vs Miss:**
+- Cache Hit: data found in cache → fast response
+- Cache Miss: data not found → fetch from DB, write to cache → slower first time
+
+**Caching Strategies:**
+
+| Strategy | Description | Pros | Cons |
+|---|---|---|---|
+| Cache-Aside (Lazy) | App checks cache; on miss, reads DB and populates cache | Resilient to cache failure | Cache miss on first read, stale data possible |
+| Write-Through | Write to cache AND DB simultaneously | Always consistent | Higher write latency |
+| Write-Behind (Write-Back) | Write to cache; async write to DB | Low write latency | Risk of data loss |
+| Refresh-Ahead | Proactively refresh cache before expiry | Low latency | Wasted resources if not accessed |
+
+**Cache Eviction Policies:**
+- **LRU (Least Recently Used):** Evict items not accessed recently — most common
+- **LFU (Least Frequently Used):** Evict items accessed least often
+- **FIFO:** Evict oldest item regardless of access
+- **TTL-based:** Expire after time limit
+
+**What to Cache:**
+- Database query results
+- Computed/aggregated results
+- Session data
+- API responses (rate-limited external APIs)
+- HTML fragments
+
+**What NOT to Cache:**
+- Frequently changing data
+- Financial data requiring strong consistency
+- Per-user private data without proper isolation
+
+**Redis vs Memcached:**
+
+| | Redis | Memcached |
+|---|---|---|
+| Data structures | Rich (lists, sets, sorted sets, hashes) | Simple key-value only |
+| Persistence | Yes (RDB, AOF) | No |
+| Replication | Yes | No |
+| Clustering | Yes | Limited |
+| Pub/Sub | Yes | No |
+| Use case | General caching, queues, leaderboards | Pure high-speed caching |
+
+#### ✅ 4.3 Content Delivery Networks (CDN)
+
+- **What:** Geographically distributed edge servers caching static content
+- **Purpose:** Reduce latency by serving content from server closest to user
+- **Works for:** Images, CSS, JS, videos, static HTML
+
+**CDN Types:**
+- **Pull CDN:** Origin server is source of truth; CDN fetches on first miss (lazy), TTL controls freshness
+- **Push CDN:** You proactively push content to CDN; good for large files, less dynamic
+
+**Cache Invalidation:**
+- Versioned URLs: `app.v2.3.js` — change filename on deploy
+- Purge API: Explicitly invalidate CDN cache on deploy
+- Short TTL: Risky (more origin hits), but ensures freshness
+
+**Popular CDNs:** Cloudflare, AWS CloudFront, Fastly, Akamai
+
+---
+
+### Week 5 — Message Queues & Asynchronous Processing
+
+#### ✅ 5.1 Why Message Queues?
+
+**Problems they solve:**
+- Decouples producers from consumers
+- Handles traffic spikes (queue buffers load)
+- Enables async processing (email, notifications, image processing)
+- Retry failed operations
+- Fan-out to multiple consumers
+
+#### ✅ 5.2 Message Queue Patterns
+
+**Point-to-Point (Queue):**
+- One producer, one consumer per message
+- Message is consumed and deleted
+- Use: Task queues, job processing
+- Example: AWS SQS
+
+**Publish-Subscribe (Topic):**
+- One producer, many consumers
+- Each subscriber gets every message
+- Use: Notifications, event broadcasting
+- Example: AWS SNS, Redis Pub/Sub
+
+**Competing Consumers:**
+- Multiple consumers read from same queue
+- Each message processed by exactly ONE consumer
+- Use: Worker pools, parallel processing
+
+#### ✅ 5.3 Kafka Deep Dive
+
+**Core Concepts:**
+
+```
+Producer → [Topic (Partitions 0,1,2)] → Consumer Group
+                    ↑
+                 Broker Cluster
+                 (ZooKeeper / KRaft)
+```
+
+- **Topic:** Logical channel for messages
+- **Partition:** Ordered, immutable log within a topic (unit of parallelism)
+- **Offset:** Position of a message in a partition
+- **Consumer Group:** Group of consumers sharing work; each partition → one consumer
+- **Broker:** Kafka server hosting partitions
+- **Replication Factor:** Number of copies of each partition across brokers
+
+**Key Properties:**
+- Ordered within a partition (NOT across partitions)
+- Messages retained for configurable period (e.g., 7 days) — re-consumable
+- At-least-once delivery by default; exactly-once with idempotent producers
+
+**Kafka vs RabbitMQ:**
+
+| | Kafka | RabbitMQ |
+|---|---|---|
+| Model | Distributed log | Traditional message broker |
+| Throughput | Millions/sec | Thousands/sec |
+| Message retention | Configurable (days) | Consumed and deleted |
+| Ordering | Per-partition | Per-queue |
+| Use case | Event streaming, log aggregation | Task queues, RPC |
+| Consumer model | Pull | Push |
+
+---
+
+### Week 6 — Databases Advanced
+
+#### ✅ 6.1 Database Replication
+
+**Master-Slave (Primary-Replica):**
+- All writes → Primary
+- Reads distributed across replicas
+- Lag between primary and replica (replication lag)
+- On primary failure: promote a replica (failover)
+
+**Multi-Master:**
+- Multiple nodes accept writes
+- Conflict resolution needed (last-write-wins, vector clocks)
+- Higher availability but complex
+- Example: DynamoDB global tables, CockroachDB
+
+**Synchronous vs Asynchronous Replication:**
+- Sync: Primary waits for replica ACK → strong consistency, higher latency
+- Async: Primary doesn't wait → lower latency, possible data loss on failure
+
+#### ✅ 6.2 Database Sharding
+
+**What:** Horizontally partitioning data across multiple DB instances
+
+**Sharding Strategies:**
+
+| Strategy | How | Pros | Cons |
+|---|---|---|---|
+| Hash-based | `shard = hash(user_id) % N` | Even distribution | Resharding is hard |
+| Range-based | Users A-M on shard 1, N-Z on shard 2 | Easy to understand, range queries | Hot spots possible |
+| Directory-based | Lookup table maps key → shard | Flexible | Lookup table is bottleneck |
+| Geo-based | Shard by user location | Low latency for regional queries | Imbalanced if skewed population |
+
+**Challenges:**
+- Cross-shard joins are expensive (denormalize or use application-level joins)
+- Cross-shard transactions are complex
+- Resharding requires data migration
+- Hotspots (celebrity problem)
+
+#### ✅ 6.3 Consistent Hashing
+
+**Problem with simple hashing (`node = hash(key) % N`):**
+- Adding/removing a node → almost all keys remapped → cache storm
+
+**Consistent Hashing Solution:**
+- Hash space forms a ring (0 to 2³²)
+- Both nodes and keys are hashed onto the ring
+- Key is assigned to the first node clockwise on the ring
+- Adding/removing a node → only ~1/N of keys remapped
+
+**Virtual Nodes:**
+- Each physical node has multiple positions on the ring
+- Improves load distribution
+- Makes heterogeneous node sizing easier
+
+**Used by:** Cassandra, DynamoDB, Akamai CDN
+
+---
+
+## 5. Phase 3 — Distributed Systems Deep Dive (Weeks 7–9) <a name="phase-3"></a>
+
+### Week 7 — Consistency, Availability & Fault Tolerance
+
+#### ✅ 7.1 Consistency Models
+
+**Strong Consistency:**
+- Every read sees the most recent write
+- All nodes see the same data at the same time
+- Example: single-node DB, Zookeeper, etcd
+- Cost: Higher latency, lower availability
+
+**Eventual Consistency:**
+- Given no new updates, all nodes will eventually converge
+- Reads may return stale data temporarily
+- Example: DNS, Cassandra, DynamoDB
+- Cost: Application must handle stale reads
+
+**Read-Your-Own-Writes:**
+- After a write, the same user sees their write on subsequent reads
+- Even if globally eventual — your session sees your data
+
+**Monotonic Reads:**
+- If you read version X, you'll never see an older version again
+- Implemented via sticky reads (same replica) or version tracking
+
+**Causal Consistency:**
+- Operations causally related are seen in the right order by all processes
+- Stronger than eventual, weaker than strong
+
+#### ✅ 7.2 Distributed Transactions
+
+**Two-Phase Commit (2PC):**
+```
+Phase 1 (Prepare):  Coordinator → asks all participants "Can you commit?"
+                    All participants: "Yes" (lock resources) or "No"
+Phase 2 (Commit):   If ALL said yes → Coordinator sends Commit
+                    If ANY said no → Coordinator sends Abort
+```
+- Problem: Coordinator failure in Phase 2 → participants blocked (holding locks)
+- Problem: Blocking protocol — not suitable for microservices
+
+**Saga Pattern (Preferred for Microservices):**
+- Long-running transaction split into local transactions
+- Each local transaction publishes event/message
+- On failure: compensating transactions (undo)
+
+```
+Order Service → Payment Service → Inventory Service → Shipping Service
+      ↓(fail)       ↓(rollback)      ↓(rollback)       ↓(rollback)
+Cancel Order  ← Refund Payment ← Restore Inventory ← Cancel Shipment
+```
+
+**Saga Implementations:**
+- **Choreography:** Each service reacts to events (no central coordinator) — simpler, hard to track
+- **Orchestration:** Central orchestrator tells services what to do — complex but easier to monitor
+
+#### ✅ 7.3 Leader Election
+
+**Why:** Distributed systems need coordination — one node must be authoritative for writes
+
+**Algorithms:**
+- **Bully Algorithm:** Highest ID node becomes leader; sends "I'm the boss" messages
+- **Raft:** Leader elected by majority vote; log replication ensures consistency
+- **Paxos:** Classic consensus algorithm; complex but provably correct
+
+**Tools that handle this for you:**
+- Apache ZooKeeper: ephemeral znodes for leadership
+- etcd: used by Kubernetes for leader election
+- Redis SETNX: simple but less robust
+
+#### ✅ 7.4 Failure Detection
+
+**Heartbeat:** Periodic health signals; if no heartbeat → suspected failure
+
+**Gossip Protocol:**
+- Nodes periodically share state with random peers
+- State propagates across cluster exponentially
+- Decentralized, scalable, no single point of failure
+- Used by: Cassandra, DynamoDB
+
+**Phi Accrual Failure Detector:**
+- Adaptive failure detection based on heartbeat history
+- Returns a failure probability (φ value) rather than binary fail/not-fail
+- Used by Cassandra
+
+---
+
+### Week 8 — Rate Limiting, Idempotency, Service Discovery
+
+#### ✅ 8.1 Rate Limiting
+
+**Why:** Prevent abuse, ensure fair usage, protect downstream services
+
+**Algorithms:**
+
+| Algorithm | Description | Pros | Cons |
+|---|---|---|---|
+| Fixed Window Counter | Count requests in time window | Simple | Boundary spike (double traffic at window edge) |
+| Sliding Window Log | Log each request timestamp, count in last N seconds | Accurate | High memory usage |
+| Sliding Window Counter | Weighted combination of current + previous window | Balanced accuracy/memory | Slightly approximate |
+| Token Bucket | Tokens added at fixed rate; each request consumes token | Allows bursts, smooth | Slightly complex |
+| Leaky Bucket | Queue of fixed size; process at constant rate | Smooth output | Drops requests under burst |
+
+**Token Bucket** is most common (AWS, Stripe use it):
+- Bucket capacity = max burst
+- Refill rate = sustained rate
+- Request: consume 1 token; if empty → reject (429 Too Many Requests)
+
+**Distributed Rate Limiting:**
+- Single server: in-memory
+- Distributed: Redis + Lua scripts for atomic check-and-decrement
+- Sliding window in Redis: `ZADD` + `ZCOUNT` + `ZREMRANGEBYSCORE`
+
+#### ✅ 8.2 Idempotency
+
+**Definition:** An operation that produces the same result even if applied multiple times
+
+**Why critical:** Network retries, duplicate messages, client retries after timeout
+
+**Implementation:**
+- **Idempotency Keys:** Client generates UUID per request; server checks if key already processed
+  ```
+  POST /payments
+  Idempotency-Key: a9f3e2b1-4c2d-4a8e-9f7b-1234567890ab
+  ```
+- Server stores result in DB/Redis keyed by idempotency key
+- On duplicate: return same stored result without re-processing
+
+**HTTP Methods:**
+- Naturally idempotent: GET, PUT, DELETE
+- NOT naturally idempotent: POST (use idempotency keys)
+
+#### ✅ 8.3 Service Discovery
+
+**Problem:** In microservices, IPs change dynamically — how does Service A find Service B?
+
+**Client-Side Discovery:**
+- Client queries Service Registry (e.g., Eureka)
+- Client selects instance and calls directly
+- Client has load balancing logic
+
+**Server-Side Discovery:**
+- Client calls Load Balancer
+- LB queries registry and forwards
+- Simpler clients (AWS ALB + ECS/EKS)
+
+**Service Registries:**
+- Consul, Eureka (Netflix), etcd, ZooKeeper
+- Self-registration: service registers on startup, deregisters on shutdown
+
+---
+
+### Week 9 — Search, Analytics & Real-Time Systems
+
+#### ✅ 9.1 Full-Text Search (Elasticsearch)
+
+**Architecture:**
+- Index = collection of documents (like a DB table)
+- Shard = unit of storage (Lucene index)
+- Replica = copy of shard for HA and read scaling
+
+**How it works:**
+1. Document ingested → analyzed → inverted index created
+2. Query → analyzed → matched against inverted index
+3. Relevance scored (BM25 algorithm by default)
+
+**Inverted Index:**
+```
+Word "payment" → [doc1, doc5, doc23]
+Word "failed"  → [doc2, doc5, doc18]
+Search: "payment failed" → intersect → [doc5]
+```
+
+**Common Use Cases:**
+- Product search (e-commerce)
+- Log aggregation and analysis (ELK stack)
+- Auto-complete suggestions
+- Full-text content search
+
+**Sync DB → Elasticsearch:**
+- Dual writes (risky — partial failure)
+- CDC (Change Data Capture): Debezium reads DB binlog → Kafka → Elasticsearch
+- Periodic batch sync (acceptable staleness)
+
+#### ✅ 9.2 Time-Series Databases
+
+- Optimized for append-only, time-ordered data
+- Efficient compression for repeated values
+- Automatic data downsampling (high-res → low-res over time)
+- Examples: InfluxDB, TimescaleDB, Prometheus, OpenTSDB
+
+**Use Cases:** Metrics, monitoring, IoT sensor data, financial ticks
+
+#### ✅ 9.3 Data Warehouses vs Data Lakes
+
+| | Data Warehouse | Data Lake |
+|---|---|---|
+| Data | Structured, processed | Raw, any format |
+| Schema | Schema-on-write | Schema-on-read |
+| Purpose | BI, reporting | Data science, ML |
+| Examples | Snowflake, BigQuery, Redshift | S3 + Athena, Delta Lake |
+| Performance | Fast queries | Slower, flexible |
+
+**Lambda Architecture:**
+```
+New Data → Batch Layer (historical) + Speed Layer (real-time)
+                                ↓
+                         Serving Layer (merged view)
+```
+
+**Kappa Architecture:**
+- Stream everything through one layer (Kafka-based)
+- Simpler than Lambda, but requires reprocessing for historical data
+
+---
+
+## 6. Phase 4 — Real-World System Design (Weeks 10–12) <a name="phase-4"></a>
+
+### Week 10 — Design Social & Communication Systems
+
+#### ✅ 10.1 Design a Chat System (WhatsApp/Slack)
+
+**Requirements:**
+- 1-1 and group messaging
+- Online/offline status
+- Message delivery (sent, delivered, read receipts)
+- Push notifications for offline users
+
+**Key Design Decisions:**
+
+```
+Client ←[WebSocket]→ Chat Server ←→ Message Queue (Kafka)
+                          ↓
+                   Message DB (Cassandra)
+                          ↓
+                   Notification Service → APNs/FCM
+```
+
+- **Why WebSocket:** Persistent connection; server can push messages to client
+- **Why Cassandra:** High write throughput, time-series message storage, wide-column suits `(user_id, time)` queries
+- **Message fan-out (group chat):** Write to each member's inbox OR use pull model
+- **Online presence:** Redis pub/sub + heartbeat; expire key after 30s
+
+**Message ID Design:**
+- Use Snowflake IDs (timestamp + machine ID + sequence) for global ordering within user's messages
+
+#### ✅ 10.2 Design a News Feed (Facebook/Twitter)
+
+**Push (Fan-out on write):**
+- When user posts → immediately write to all followers' feeds
+- Pro: Fast feed reads (pre-computed)
+- Con: Celebrity with 10M followers → 10M writes per post (write amplification)
+
+**Pull (Fan-out on read):**
+- When user opens feed → fetch posts from all followed accounts and merge
+- Pro: No write amplification
+- Con: Slow feed reads (especially with many followees)
+
+**Hybrid Approach (Twitter's actual approach):**
+- Regular users: Push model
+- Celebrities (>1M followers): Pull model on read
+- Feed read = pre-computed feed + real-time pull from celebrities → merge
+
+**Feed Ranking:**
+- Simple: Chronological
+- Smart: ML model scoring (engagement probability, recency, user affinity)
+
+---
+
+### Week 11 — Design Storage & Infrastructure Systems
+
+#### ✅ 11.1 Design a URL Shortener (bit.ly)
+
+**Core Flow:**
+```
+POST /shorten {url: "long-url"} → short_code (7 chars)
+GET /{short_code} → 301/302 Redirect to long URL
+```
+
+**ID Generation Options:**
+- **Random base62:** Generate 7 random chars; check DB for collision; simple but O(1) average
+- **Counter-based:** Auto-increment ID → encode as base62; no collision; distributed counter needs coordination
+- **MD5/SHA hash:** Take first 7 chars; collision possible; deterministic (same URL → same code)
+
+**Database:**
+- Simple KV store: `short_code → {long_url, created_at, user_id, expiry}`
+- PostgreSQL or DynamoDB
+- Cache hot URLs in Redis (small dataset, power-law distribution)
+
+**Redirect Type:**
+- **301 Permanent:** Browser caches; reduces server load; analytics inaccurate (browser doesn't call short URL again)
+- **302 Temporary:** Every click hits server; accurate analytics (usually preferred)
+
+**Scale Estimates:**
+- 100M URLs shortened/day = 1,150/sec writes
+- 10:1 read:write → 11,500 reads/sec
+- 7-char base62 = 62⁷ ≈ 3.5 trillion unique codes (plenty)
+
+#### ✅ 11.2 Design a Distributed File Storage (S3/Dropbox)
+
+**Key Components:**
+```
+Client → API Gateway → Metadata Service (SQL DB)
+                   ↓
+              Object Storage (chunks stored in distributed FS)
+                   ↓
+              Replication (3x across availability zones)
+```
+
+**Chunking:**
+- Large files split into chunks (4MB each)
+- Only changed chunks uploaded on sync (delta sync)
+- Each chunk: content-addressed (SHA-256 of content = chunk ID)
+- Deduplication: same chunk across users → stored once
+
+**Metadata:**
+- File tree structure (path, name, size, version)
+- Chunk list per file version
+- Stored in relational DB (ACID needed for versioning)
+
+**Conflict Resolution:**
+- Last-write-wins (simple)
+- Operational Transformation (Google Docs)
+- CRDTs (Conflict-free Replicated Data Types)
+
+#### ✅ 11.3 Design a Rate Limiter Service
+
+**Architecture:**
+```
+Client → API Gateway → Rate Limiter Middleware
+                              ↓
+                         Redis Cluster
+                         (token buckets)
+```
+
+- Sliding window counter in Redis using sorted sets
+- Each request: `ZADD + ZCOUNT + ZREMRANGEBYSCORE` in a Lua script (atomic)
+- Return `X-RateLimit-Remaining` and `Retry-After` headers
+
+---
+
+### Week 12 — Design Data & Search Systems
+
+#### ✅ 12.1 Design a Search Engine (Google-lite)
+
+**High-Level Components:**
+
+```
+Web Crawler → URL Frontier (queue) → Raw HTML Store
+                                           ↓
+                                    Content Parser → Inverted Index Builder
+                                                             ↓
+                                                     Index Storage (Elasticsearch)
+                                                             ↓
+                                                     Ranking Engine → Results API
+```
+
+**Crawler Design:**
+- Politeness: respect `robots.txt`, crawl delays
+- Scheduler: priority queue (PageRank-scored URLs first)
+- Deduplication: Bloom filter for visited URLs
+- Scale: distributed crawlers, multiple machines
+
+**Indexing:**
+- Tokenize → remove stop words → stem → inverted index
+- Store: (term → [(doc_id, position, frequency)])
+
+**Ranking Signals:**
+- TF-IDF: term frequency / inverse document frequency
+- PageRank: link graph analysis
+- Freshness, user engagement, authority
+
+#### ✅ 12.2 Design a Notification System
+
+**Types:** Push (APNs/FCM), Email (SendGrid/SES), SMS (Twilio), In-app
+
+**Architecture:**
+```
+Trigger (event) → Notification Service → Queue (Kafka topics per channel)
+                                               ↓               ↓             ↓
+                                         Push Worker   Email Worker   SMS Worker
+                                               ↓               ↓             ↓
+                                           APNs/FCM      SendGrid        Twilio
+```
+
+**Key Concerns:**
+- **De-duplication:** Idempotency key prevents sending same notification twice
+- **Priority queue:** Critical alerts (fraud, OTP) jump queue
+- **Rate limiting:** Don't spam users; respect user preferences
+- **Retry logic:** Exponential backoff with dead-letter queue for failures
+- **Analytics:** Track open rates, delivery rates
+
+---
+
+## 7. Phase 5 — Advanced Topics & Polish (Weeks 13–16) <a name="phase-5"></a>
+
+### Week 13 — Advanced Database Patterns
+
+#### ✅ 13.1 CQRS (Command Query Responsibility Segregation)
+
+```
+Write Side (Commands): Client → Command → Write Model → Event Store
+Read Side (Queries):   Read Model ← Projection ← Event Store → Client
+```
+
+- Separate read and write models
+- Write model optimized for consistency
+- Read model optimized for queries (denormalized, pre-computed)
+- Usually combined with Event Sourcing
+
+#### ✅ 13.2 Event Sourcing
+
+- Store sequence of events, not current state
+- Current state = replay all events
+- Benefits: Full audit log, time travel, event replay, easy integration
+- Challenges: Event versioning, snapshot strategies for performance
+
+#### ✅ 13.3 Change Data Capture (CDC)
+
+- Capture DB changes as events without changing application code
+- Read DB transaction log (binlog for MySQL, WAL for PostgreSQL)
+- Tools: Debezium, Maxwell, AWS DMS
+- Use cases: Sync to Elasticsearch, invalidate cache, audit logs, data pipelines
+
+### Week 14 — Security in System Design
+
+#### ✅ 14.1 Authentication vs Authorization
+
+- **Authentication (AuthN):** Who are you? (Prove your identity)
+- **Authorization (AuthZ):** What can you do? (Permissions)
+
+#### ✅ 14.2 OAuth 2.0 & JWT
+
+**OAuth 2.0 Flow (Authorization Code):**
+```
+User → App → Authorization Server → Authorization Code
+App → Authorization Server (code + secret) → Access Token + Refresh Token
+App → Resource Server (Access Token) → Protected Resource
+```
+
+**JWT Structure:**
+```
+Header.Payload.Signature
+{alg: HS256}.{sub: user_id, exp: timestamp, roles: [...]}.HMAC(header+payload, secret)
+```
+
+**JWT Best Practices:**
+- Short expiry (15 min) for access tokens
+- Long-lived refresh tokens (stored in HttpOnly cookie)
+- Blacklist revoked refresh tokens in Redis
+- Use RS256 (asymmetric) for multi-service architectures
+
+#### ✅ 14.3 OWASP Top 10 (Relevant to System Design)
+
+| # | Vulnerability | Design Mitigation |
+|---|---|---|
+| 1 | Broken Access Control | RBAC, ABAC, principle of least privilege |
+| 2 | Cryptographic Failures | TLS everywhere, encrypt PII at rest (AES-256) |
+| 3 | Injection | Parameterized queries, input validation |
+| 7 | Auth Failures | MFA, secure session management, JWT best practices |
+| 8 | Data Integrity Failures | Signed JWTs, dependency scanning, SBOM |
+| 10 | SSRF | Allowlist outbound requests, block internal IPs |
+
+#### ✅ 14.4 API Security Design
+
+- **Input Validation:** Reject malformed requests at gateway
+- **Rate Limiting:** Prevent brute force and DoS
+- **API Keys:** Identify callers; rotate regularly
+- **OAuth Scopes:** Minimal permission grants
+- **Secrets Management:** Vault, AWS Secrets Manager (never hardcode)
+- **Audit Logs:** Log all API calls with identity (who did what, when)
+
+### Week 15 — Microservices Architecture Patterns
+
+#### ✅ 15.1 Microservices vs Monolith
+
+| | Monolith | Microservices |
+|---|---|---|
+| Deployment | Single deployable unit | Independent deployments |
+| Scaling | Scale everything | Scale per service |
+| Coupling | Tightly coupled | Loosely coupled |
+| Complexity | Simple initially | High operational complexity |
+| Start with | Yes | Migrate after product-market fit |
+
+#### ✅ 15.2 Key Microservices Patterns
+
+**API Gateway:**
+- Single entry point for all clients
+- Handles: Auth, SSL termination, routing, rate limiting, logging
+- Examples: Kong, AWS API Gateway, Nginx
+
+**Circuit Breaker:**
+- Prevents cascading failures
+- States: Closed (normal) → Open (failing, fail fast) → Half-Open (probe)
+- Libraries: Resilience4j (Java), Hystrix (deprecated), Polly (.NET)
+
+**Bulkhead:**
+- Isolate resources per service/feature
+- Thread pool per downstream service
+- Prevents one slow service from exhausting all threads
+
+**Sidecar Pattern:**
+- Auxiliary container alongside main service
+- Handles: logging, monitoring, service mesh (Envoy in Istio)
+
+**Strangler Fig:**
+- Migrate monolith to microservices incrementally
+- New features as microservices; gradually migrate old features
+
+#### ✅ 15.3 Service Mesh
+
+- Infrastructure layer for service-to-service communication
+- Handles: mTLS, load balancing, retries, circuit breaking, observability
+- Examples: Istio, Linkerd, Consul Connect
+- **Data plane:** Envoy proxies (sidecars)
+- **Control plane:** Istiod (manages proxies)
+
+### Week 16 — Observability & Final Mock Interviews
+
+#### ✅ 16.1 Observability: The Three Pillars
+
+**Metrics (What's happening):**
+- Quantitative measurements over time
+- Types: Counter, Gauge, Histogram, Summary
+- Tools: Prometheus + Grafana, CloudWatch, Datadog
+- Key metrics: Request rate, error rate, latency (p50, p95, p99)
+
+**Logs (What happened):**
+- Structured logs (JSON preferred over plain text)
+- Log levels: DEBUG, INFO, WARN, ERROR, FATAL
+- Centralization: ELK stack (Elasticsearch + Logstash + Kibana), Loki, Splunk
+- Correlation IDs: Trace requests across services
+
+**Traces (How it happened):**
+- Distributed tracing: track request as it flows through services
+- Trace = collection of spans; span = single operation unit
+- Tools: Jaeger, Zipkin, AWS X-Ray, Tempo
+- OpenTelemetry: vendor-neutral instrumentation standard
+
+**USE Method (for resources):**
+- **U**tilization: How busy is the resource?
+- **S**aturation: Is it over capacity?
+- **E**rrors: Is it failing?
+
+**RED Method (for services):**
+- **R**ate: Requests per second
+- **E**rrors: Error rate
+- **D**uration: Latency (especially p99)
+
+#### ✅ 16.2 SLAs, SLOs, SLIs
+
+- **SLI (Service Level Indicator):** Measured metric (e.g., 99.5% requests < 200ms)
+- **SLO (Service Level Objective):** Target for SLI (e.g., 99.9% uptime)
+- **SLA (Service Level Agreement):** Contract with consequences (e.g., credits if SLO breached)
+- **Error Budget:** 100% - SLO = allowed downtime/errors (e.g., 99.9% SLO → 8.7 hrs/year error budget)
+
+---
+
+## 8. Interview Framework — RESHADED (Detailed) <a name="interview-framework"></a>
+
+### Step-by-Step Interview Playbook
+
+#### Step 1: Requirements (5 min)
+
+**Functional Requirements — Ask these questions:**
+- Who are the users? (consumers, businesses, internal?)
+- What are the core features? (list and prioritize top 3)
+- What's out of scope?
+
+**Non-Functional Requirements — Cover these:**
+- Scale: How many users? DAU? Reads vs Writes per second?
+- Latency: P99 latency requirement?
+- Availability: 99.9%? 99.99%? (9s of availability)
+- Consistency: Strong or eventual?
+- Durability: Can we lose data?
+- Geographic distribution: Single region or global?
+
+#### Step 2: Estimation (5 min)
+
+Always estimate:
+- QPS (read and write separately)
+- Storage per day / per year
+- Bandwidth (inbound / outbound)
+- Cache requirements (20% of data = 80% traffic — Pareto)
+
+#### Step 3: API Design (3–5 min)
+
+Define 2–3 key APIs:
+```
+POST /api/v1/tweets                         → Create tweet
+GET  /api/v1/feed?user_id=&limit=&cursor=   → Get feed  
+POST /api/v1/follow                         → Follow user
+```
+
+Include: HTTP method, path, request body, response body, status codes
+
+#### Step 4: High-Level Design (10–15 min)
+
+Draw these components:
+```
+Client → CDN → API Gateway → [Services] → [Databases]
+                                    ↓
+                             Message Queue
+                                    ↓
+                          Background Workers
+```
+
+#### Step 5: Data Model (5 min)
+
+Show key entities and relationships:
+```sql
+users: (user_id PK, username, email, created_at)
+tweets: (tweet_id PK, user_id FK, content, created_at)
+follows: (follower_id, followee_id, created_at) -- composite PK
+```
+
+Justify storage choice: SQL vs NoSQL
+
+#### Step 6: Deep Dives (10–15 min)
+
+Address the hardest parts:
+- How do you handle scale to 1B users?
+- How do you ensure exactly-once delivery?
+- How do you handle the celebrity problem?
+- How do you handle failures?
+
+Proactively bring up:
+- Single points of failure and how to eliminate them
+- Bottlenecks and how to address them
+- Trade-offs of every major decision
+
+#### Step 7: Trade-offs Summary (2 min)
+
+End with: "Here are the key trade-offs in my design..."
+- Consistency vs Availability
+- Latency vs Durability
+- Simplicity vs Scalability
+- Cost vs Performance
+
+---
+
+## 9. Top 30 System Design Problems <a name="top-30-problems"></a>
+
+### Tier 1 — Must Know (Most Common in Interviews)
+
+| # | Problem | Key Concepts |
+|---|---|---|
+| 1 | URL Shortener | Hashing, KV store, caching, redirect |
+| 2 | News Feed | Fan-out, ranking, caching, pagination |
+| 3 | Chat System | WebSockets, message queue, Cassandra |
+| 4 | Rate Limiter | Token bucket, Redis, distributed counting |
+| 5 | Notification System | Fan-out, priority queue, third-party integrations |
+| 6 | Search Autocomplete | Trie, Elasticsearch, prefix caching |
+| 7 | YouTube/Netflix | Video chunking, CDN, transcoding pipeline |
+| 8 | Uber/Lyft (Ride Sharing) | Geospatial indexing, matching, real-time location |
+| 9 | Twitter/X | Fan-out, timeline generation, trending topics |
+| 10 | Dropbox/Google Drive | File chunking, delta sync, conflict resolution |
+
+### Tier 2 — Frequently Asked
+
+| # | Problem | Key Concepts |
+|---|---|---|
+| 11 | Google Search | Crawler, inverted index, PageRank, ranking |
+| 12 | Payment System | ACID, idempotency, distributed transactions |
+| 13 | E-Commerce (Amazon) | Product catalog, inventory, order management |
+| 14 | Hotel/Airbnb Booking | Reservation, double-booking prevention, search |
+| 15 | Distributed Cache | Consistent hashing, eviction, replication |
+| 16 | API Gateway | Auth, rate limiting, routing, load balancing |
+| 17 | Stock Exchange | Order matching, pub-sub, low latency |
+| 18 | Web Crawler | Politeness, dedup (Bloom filter), scheduling |
+| 19 | Instagram | Photo storage, CDN, social graph, feed |
+| 20 | Distributed Job Scheduler | Priority queue, cron, at-least-once execution |
+
+### Tier 3 — Specialized (Senior/Staff Level)
+
+| # | Problem | Key Concepts |
+|---|---|---|
+| 21 | Distributed File System (HDFS/S3) | Object storage, replication, metadata service |
+| 22 | Kafka / Message Queue | Partitions, consumer groups, exactly-once |
+| 23 | Monitoring System (Prometheus) | Metrics collection, time series, alerting |
+| 24 | Ad Click Aggregation | Stream processing, windowing, approximate counts |
+| 25 | Distributed Counter | CRDTs, HyperLogLog, eventual consistency |
+| 26 | Live Streaming (Twitch) | RTMP, HLS, transcoding, CDN |
+| 27 | Food Delivery (DoorDash) | Real-time tracking, ETA estimation, geo-routing |
+| 28 | Fraud Detection System | ML pipeline, real-time scoring, feature store |
+| 29 | Key-Value Store (Redis/DynamoDB) | LSM tree, consistent hashing, replication |
+| 30 | Proximity Service (Yelp) | Geohash, quadtree, radius search |
+
+---
+
+## 10. Estimation Cheat Sheet <a name="estimation-cheat-sheet"></a>
+
+### Units
+
+```
+Time:        1 day = 86,400 sec ≈ 100K sec
+             1 year ≈ 3.15 × 10⁷ sec ≈ 30M sec
+
+Data:        1 char = 1 byte
+             1 KB = 10³ B | 1 MB = 10⁶ B | 1 GB = 10⁹ B | 1 TB = 10¹²
+
+Network:     1 Gbps = 10⁹ bits/sec = 125 MB/sec
+             Typical server: 10 Gbps NIC
+```
+
+### Common Scale Benchmarks
+
+```
+Single DB server (PostgreSQL):  ~10K-50K reads/sec, ~5K-10K writes/sec
+Redis:                          ~100K-500K ops/sec
+Cassandra node:                 ~50K-100K writes/sec
+Kafka partition:                ~100MB/sec throughput
+CDN (Cloudflare):               50+ Tbps global capacity
+```
+
+### Sample Estimation Template
+
+```
+Traffic:
+  DAU = 100M
+  Posts/user/day = 2 → Write QPS = (100M × 2) / 86,400 ≈ 2,300/sec
+  Peak write QPS = 2,300 × 3 (peak factor) ≈ 7,000/sec
+  Read:Write ratio = 100:1 → Read QPS = 230,000/sec → Peak 700,000/sec
+
+Storage:
+  Each post: 140 bytes text + 200 bytes metadata = 340 bytes
+  Daily storage: 2,300/sec × 86,400 × 340 bytes = ~67 GB/day
+  5-year storage: 67 GB × 365 × 5 ≈ 120 TB
+
+Bandwidth:
+  Write: 2,300 × 340 bytes = ~780 KB/sec ≈ 1 MB/sec (negligible)
+  Read: 230,000 × 340 bytes = ~78 MB/sec
+
+Cache:
+  Hot data = 20% of content serves 80% of reads
+  Cache 20% of daily data: 67 GB × 0.2 ≈ 14 GB RAM needed
+```
+
+---
+
+## 11. Common Mistakes to Avoid <a name="common-mistakes"></a>
+
+### In the Interview
+
+- ❌ **Jumping into design without clarifying requirements** — Always ask 3–5 clarifying questions first
+- ❌ **Designing for 1B users immediately** — Start simple, then scale
+- ❌ **Not quantifying decisions** — "We need caching" → "We need 50GB Redis cache to serve 200K read QPS"
+- ❌ **Ignoring failures** — Always address: what happens if X fails?
+- ❌ **Gold-plating** — Don't design every last detail; focus on hardest problems
+- ❌ **Not listening to hints** — Interviewer guidance is gold; redirect accordingly
+- ❌ **Being silent** — Narrate your thought process even when thinking
+
+### In the Design
+
+- ❌ **Single points of failure** — Every critical component should have redundancy
+- ❌ **Synchronous everything** — Async + queues for non-critical paths
+- ❌ **Not using caching** — Identify read-heavy workloads; cache at multiple layers
+- ❌ **Global writes to single DB** — Shard or use distributed DB early in design
+- ❌ **Ignoring the network** — Minimize cross-datacenter calls; use local replicas
+- ❌ **Not versioning APIs** — Always include `/v1/` in API paths
+
+---
+
+## 12. Resources & References <a name="resources"></a>
+
+### Books
+
+| Book | Focus | Level |
+|---|---|---|
+| **Designing Data-Intensive Applications** (Kleppmann) | Distributed systems, storage | ⭐⭐⭐ Essential |
+| **System Design Interview** (Alex Xu, Vol 1 & 2) | Interview-focused designs | ⭐⭐⭐ Essential |
+| **Building Microservices** (Sam Newman) | Microservices patterns | ⭐⭐ Advanced |
+| **Clean Architecture** (Uncle Bob) | Software design principles | ⭐⭐ Complementary |
+
+### Online Resources
+
+- **ByteByteGo Newsletter** — Alex Xu's visual system design breakdowns
+- **High Scalability Blog** — Real-world architecture case studies
+- **The Architecture of Open Source Applications** — Free online book
+- **Martin Fowler's Blog** — Patterns and enterprise architecture
+- **AWS Architecture Center** — Reference architectures
+
+### Practice Platforms
+
+- **Excalidraw** or **draw.io** — Whiteboard diagramming practice
+- **Pramp** / **Interviewing.io** — Mock interviews with peers/professionals
+- **ByteByteGo** — Structured system design course
+- **Grokking the System Design Interview** (Educative)
+
+### YouTube Channels
+
+- **ByteByteGo** — Visual system design explanations
+- **Gaurav Sen** — Distributed systems concepts
+- **Tech Dummies** — Interview-style walkthroughs
+- **Hussein Nasser** — Deep technical deep dives
+
+### GitHub Repositories
+
+- **donnemartin/system-design-primer** — Comprehensive reference (40K+ stars)
+- **binhnguyennus/awesome-scalability** — Curated scalability resources
+
+---
+
+## 🎯 12-Week Study Plan Summary
+
+| Week | Focus | Daily Time |
+|---|---|---|
+| 1–3 | Fundamentals (Networking, Storage, Scalability) | 2 hrs |
+| 4–6 | Building Blocks (LB, Cache, CDN, Queues, DBs) | 2 hrs |
+| 7–9 | Distributed Systems (Consensus, Transactions, Search) | 2.5 hrs |
+| 10–12 | Real-World Designs (Top 10 problems) | 2.5 hrs |
+| 13–16 | Advanced Topics + 2 mock interviews/week | 3 hrs |
+
+---
+
+## ✅ Progress Tracker
+
+Copy and use this in your study journal:
+
+```
+PHASE 1 — Fundamentals
+[ ] 1.1 OSI Model & TCP/IP
+[ ] 1.2 DNS
+[ ] 1.3 APIs (REST/gRPC/GraphQL/WebSocket)
+[ ] 2.1 SQL vs NoSQL
+[ ] 2.2 Indexing
+[ ] 2.3 CAP Theorem
+[ ] 2.4 PACELC
+[ ] 3.1 Vertical vs Horizontal Scaling
+[ ] 3.2 Latency Numbers
+[ ] 3.3 Back-of-envelope Estimation
+
+PHASE 2 — Building Blocks
+[ ] 4.1 Load Balancers
+[ ] 4.2 Caching (strategies, Redis)
+[ ] 4.3 CDN
+[ ] 5.1 Message Queues
+[ ] 5.2 Queue Patterns
+[ ] 5.3 Kafka
+[ ] 6.1 Database Replication
+[ ] 6.2 Sharding
+[ ] 6.3 Consistent Hashing
+
+PHASE 3 — Distributed Systems
+[ ] 7.1 Consistency Models
+[ ] 7.2 Distributed Transactions
+[ ] 7.3 Leader Election
+[ ] 7.4 Failure Detection
+[ ] 8.1 Rate Limiting
+[ ] 8.2 Idempotency
+[ ] 8.3 Service Discovery
+[ ] 9.1 Elasticsearch
+[ ] 9.2 Time-Series DBs
+[ ] 9.3 Data Warehouses
+
+PHASE 4 — Real-World Designs
+[ ] Chat System
+[ ] News Feed
+[ ] URL Shortener
+[ ] Distributed File Storage
+[ ] Rate Limiter Service
+[ ] Search Engine
+[ ] Notification System
+
+PHASE 5 — Advanced
+[ ] 13.1 CQRS
+[ ] 13.2 Event Sourcing
+[ ] 13.3 CDC
+[ ] 14.1 OAuth 2.0 & JWT
+[ ] 14.2 OWASP in System Design
+[ ] 15.1 Microservices Patterns
+[ ] 15.2 Circuit Breaker, Bulkhead, Saga
+[ ] 15.3 Service Mesh
+[ ] 16.1 Observability (Metrics, Logs, Traces)
+[ ] 16.2 SLAs, SLOs, SLIs
+
+MOCK INTERVIEWS (target: 10+ before your interview)
+[ ] Mock 1: URL Shortener
+[ ] Mock 2: Chat System
+[ ] Mock 3: News Feed
+[ ] Mock 4: Rate Limiter
+[ ] Mock 5: YouTube
+[ ] Mock 6: Uber
+[ ] Mock 7: (choice)
+[ ] Mock 8: (choice)
+[ ] Mock 9: (choice)
+[ ] Mock 10: (choice)
+```
+
+---
+
+*"The goal of a system design interview is not to get the 'right' answer — it's to demonstrate that you can think through complex problems systematically, communicate trade-offs clearly, and collaborate on solutions. The process matters more than the destination."*
+
+---
